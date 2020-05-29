@@ -1,0 +1,48 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using WebApiSql.Contracts;
+using WebApiSql.Models;
+using Microsoft.Azure.Cosmos;
+
+namespace WebApiSql.Services
+{
+    public class SampleListService : ISampleListService
+    {        
+        private Container listItemsContainer;
+
+        public SampleListService(CosmosClient client, string databaseName, string containerName)
+        {
+            listItemsContainer = client.GetContainer(databaseName, containerName);
+        }
+
+        public async Task<ListItem> AddItemAsync(ListItem item)
+        {
+            item.Id = item.Id ?? Guid.NewGuid().ToString();
+            await listItemsContainer.CreateItemAsync<ListItem>(item);
+            return item;
+        }
+
+        public async Task<long> DeleteItemAsync(string id)
+        {
+             var result = await listItemsContainer.DeleteItemAsync<ListItem>(id, PartitionKey.None);
+             return 1;
+        }
+
+        public async Task<IEnumerable<ListItem>> GetItemsAsync()
+        {
+            var queryString = "SELECT r.id, r.text FROM root r ORDER BY r._ts DESC";
+            var query = listItemsContainer.GetItemQueryIterator<ListItem>(new QueryDefinition(queryString));
+            List<ListItem> results = new List<ListItem>();
+            while (query.HasMoreResults)
+            {
+                var response = await query.ReadNextAsync();
+                
+                results.AddRange(response.ToList());
+            }
+
+            return results;
+        }
+    }
+}
