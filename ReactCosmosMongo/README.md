@@ -11,7 +11,7 @@ In the root directory of the project...
 
 ### Sample Data
 
-Replace the sample data stored in /server/sampleData.js.
+Replace the sample data stored in /server/SampleDataService.cs.
 
 
 ### Adding a New Page
