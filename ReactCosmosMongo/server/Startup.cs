@@ -32,8 +32,8 @@ namespace WebApiMongo
             services.AddControllers();
             services.AddSpaStaticFiles(config => config.RootPath = "ClientApp/build");
             services.AddSingleton<ISampleDataService, SampleDataService>();
-            services.AddSingleton<ISampleListService>(InitializeCosmosClientInstance());
-
+            services.AddSingleton<IMongoClient>(InitializeCosmosClientInstance());
+            services.AddSingleton<ISampleListService, SampleListService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,21 +61,12 @@ namespace WebApiMongo
                 app.UseSpa(spa => spa.Options.SourcePath = "ClientApp");
             }
         }
-
-
-        private ISampleListService InitializeCosmosClientInstance()
+        private IMongoClient InitializeCosmosClientInstance()
         {
             var connectionString = Configuration.GetConnectionString("cosmosDb");
-            var cosmosSection = Configuration.GetSection("CosmosDb");
-            string databaseName = cosmosSection.GetSection("DatabaseName").Value;
-            string collectionName = cosmosSection.GetSection("CollectionName").Value;
             var settings = MongoClientSettings.FromUrl(new MongoUrl(connectionString));
             settings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
-            var client = new MongoClient(settings);
-
-            var cosmosDbService = new SampleListService(client, databaseName, collectionName);
-    
-            return cosmosDbService;
+            return new MongoClient(settings);
         }
     }
 }

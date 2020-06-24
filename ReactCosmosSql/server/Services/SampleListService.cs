@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WebApiSql.Contracts;
 using WebApiSql.Models;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Configuration;
 
 namespace WebApiSql.Services
 {
@@ -12,8 +13,11 @@ namespace WebApiSql.Services
     {        
         private Container listItemsContainer;
 
-        public SampleListService(CosmosClient client, string databaseName, string containerName)
-        {
+        public SampleListService(CosmosClient client, IConfiguration config)
+        {           
+            var cosmosSection = config.GetSection("CosmosDb");
+            string databaseName = cosmosSection.GetSection("DatabaseName").Value;
+            string containerName = cosmosSection.GetSection("ContainerName").Value;
             listItemsContainer = client.GetContainer(databaseName, containerName);
         }
 

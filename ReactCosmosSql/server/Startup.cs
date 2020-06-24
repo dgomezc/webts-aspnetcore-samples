@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Cosmos;
 
 namespace WebApiSql
 {
@@ -29,8 +30,9 @@ namespace WebApiSql
         {
             services.AddControllers();
             services.AddSpaStaticFiles(config => config.RootPath = "ClientApp/build");
-            services.AddSingleton<ISampleDataService, SampleDataService>();            
-            services.AddSingleton<ISampleListService>(InitializeCosmosClientInstanceAsync().GetAwaiter().GetResult());
+            services.AddSingleton<ISampleDataService, SampleDataService>();  
+            services.AddSingleton<CosmosClient>(InitializeCosmosClientInstanceAsync().GetAwaiter().GetResult());
+            services.AddSingleton<ISampleListService, SampleListService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -59,7 +61,7 @@ namespace WebApiSql
             }
         }
 
-        private async Task<SampleListService> InitializeCosmosClientInstanceAsync()
+        private async Task<CosmosClient> InitializeCosmosClientInstanceAsync()
         {
             var cosmosSection = Configuration.GetSection("CosmosDb");
             string databaseName = cosmosSection.GetSection("DatabaseName").Value;
@@ -73,9 +75,7 @@ namespace WebApiSql
             
             var database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
             await database.Database.CreateContainerIfNotExistsAsync(containerName, "/_partitionKey");
-            
-            var cosmosDbService = new SampleListService(client, databaseName, containerName);
-            return cosmosDbService;
+            return client;
         }
     }
 }

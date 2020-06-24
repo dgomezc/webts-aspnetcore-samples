@@ -5,6 +5,7 @@ using WebApiMongo.Contracts;
 using WebApiMongo.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Microsoft.Extensions.Configuration;
 
 namespace WebApiMongo.Services
 {
@@ -12,8 +13,11 @@ namespace WebApiMongo.Services
     {
         private readonly IMongoCollection<ListItem> items;
 
-        public SampleListService(MongoClient client, string databaseName, string collectionName)
-        {
+        public SampleListService(IMongoClient client, IConfiguration config)
+        {            
+            var cosmosSection = config.GetSection("CosmosDb");            
+            string databaseName = cosmosSection.GetSection("DatabaseName").Value;
+            string collectionName = cosmosSection.GetSection("CollectionName").Value;
             var mongoDb = client.GetDatabase(databaseName);
             items = mongoDb.GetCollection<ListItem>(collectionName);
         }
